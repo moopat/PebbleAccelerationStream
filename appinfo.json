@@ -1,0 +1,49 @@
+{
+    "appKeys": {
+        "KEY_COMMAND": 0
+    },
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Markus Deutsch",
+    "longName": "Carrie",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/launcher.png",
+                "menuIcon": true,
+                "name": "LAUNCHER",
+                "type": "png"
+            },
+            {
+                "file": "images/menu_cancel.png",
+                "name": "MENU_CANCEL",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_fall.png",
+                "name": "ICON_FALL",
+                "type": "png"
+            },
+            {
+                "file": "images/menu_exclamation.png",
+                "name": "MENU_EXCLAMATION",
+                "type": "png"
+            },
+            {
+                "file": "images/icon_pill.png",
+                "name": "ICON_PILL",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "2",
+    "shortName": "Carrie",
+    "uuid": "69ff11ff-b922-41fa-9f6e-a5b3b77417a3",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
