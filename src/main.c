@@ -1,16 +1,15 @@
 #include <pebble.h>
 #include <inttypes.h>
 
-#define KEY_COMMAND 0
+#define KEY_COMMAND 0 // the key tells the smartphone what kind of data to expect
 #define COMMAND_DATA 1
-
-#define CFG_RATE 10 // 10 samples/second
-#define CFG_RANGE 3 // samples are recorded for 10 secs
-#define CFG_BATCH 10 // samples are reported every 10 samples, so every second
-#define CFG_PARAM_COUNT 3 // number of parameters for every sample
+#define NUMBER_SAMPLES 20 // samples are reported every 20 samples, so every two seconds
+#define NUMBER_PARAMETERS 3 // number of parameters for every sample
 
 static Window *s_main_window;
+static TextLayer *s_status_layer;
 
+// A new batch of acceleration data was received.
 static void data_handler(AccelData *data, uint32_t num_samples) {	
 	DictionaryIterator *iterator;
 	app_message_outbox_begin(&iterator);
@@ -27,13 +26,13 @@ static void data_handler(AccelData *data, uint32_t num_samples) {
 		*/
 
 		// Add acceleration data
-		Tuplet t3 = TupletInteger(CFG_PARAM_COUNT * sample + 0 + 1, data[sample].x);
+		Tuplet t3 = TupletInteger(NUMBER_PARAMETERS * sample + 0 + 1, data[sample].x);
 		dict_write_tuplet(iterator, &t3);
 		
-		Tuplet t4 = TupletInteger(CFG_PARAM_COUNT * sample + 1 + 1, data[sample].y);
+		Tuplet t4 = TupletInteger(NUMBER_PARAMETERS * sample + 1 + 1, data[sample].y);
 		dict_write_tuplet(iterator, &t4);
 		
-		Tuplet t5 = TupletInteger(CFG_PARAM_COUNT * sample + 2 + 1, data[sample].z);
+		Tuplet t5 = TupletInteger(NUMBER_PARAMETERS * sample + 2 + 1, data[sample].z);
 		dict_write_tuplet(iterator, &t5);
 	}
 	
@@ -41,19 +40,44 @@ static void data_handler(AccelData *data, uint32_t num_samples) {
 }
 
 static void main_window_load(Window *window) {
-  // Not used
+  Layer *window_layer = window_get_root_layer(window);
+	GRect window_bounds = layer_get_bounds(window_layer);
+	
+	s_status_layer = text_layer_create(GRect(0, 20, window_bounds.size.w, window_bounds.size.h-40));
+	text_layer_set_background_color(s_status_layer, GColorClear);
+	text_layer_set_text_color(s_status_layer, GColorBlack);
+	text_layer_set_font(s_status_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+	text_layer_set_text_alignment(s_status_layer, GTextAlignmentCenter);
+	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_status_layer));
 }
 
 static void main_window_unload(Window *window) {
-  // Not used
+  text_layer_destroy(s_status_layer);
+}
+
+static void updateTextLayer(bool success){
+	time_t temp = time(NULL); 
+  struct tm *tick_time = localtime(&temp);
+	
+	static char buffer[] = "SUCCESS\n@\n00:00:00";
+	
+	if(success){
+		strftime(buffer, sizeof("SUCCESS\n@\n00:00:00"), "SUCCESS\n@\n%H:%M:%S", tick_time);
+	} else {
+		strftime(buffer, sizeof("ERROR\n@\n00:00:00"), "ERROR\n@\n%H:%M:%S", tick_time);
+	}
+	
+  text_layer_set_text(s_status_layer, buffer);
 }
 
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+	updateTextLayer(false);
 }
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
+	updateTextLayer(true);
 }
 
 static void init() {
@@ -66,7 +90,7 @@ static void init() {
   window_stack_push(s_main_window, true);
 
   // Subscribe to the accelerometer data service
-	accel_data_service_subscribe(CFG_BATCH, data_handler);
+	accel_data_service_subscribe(NUMBER_SAMPLES, data_handler);
 
 	// Choose update rate
 	accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
